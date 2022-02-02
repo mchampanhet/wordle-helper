@@ -2,6 +2,11 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import {InputTextModule} from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
+import {TableModule} from 'primeng/table';
+import {DividerModule} from 'primeng/divider';
+import {CardModule} from 'primeng/card';
+import {ScrollPanelModule} from 'primeng/scrollpanel';
+
 
 
 import { AppComponent } from './app.component';
@@ -13,7 +18,11 @@ import { AppComponent } from './app.component';
   imports: [
     BrowserModule,
     InputTextModule,
-    FormsModule
+    FormsModule,
+    TableModule,
+    DividerModule,
+    CardModule,
+    ScrollPanelModule
   ],
   providers: [],
   bootstrap: [AppComponent]

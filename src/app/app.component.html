@@ -1,22 +1,41 @@
-<h5>Correct Letters</h5>
-<input type="text" pInputText [(ngModel)]="correctLetter1" maxlength="1" class="w-3rem" (keyup)="onFilter()">
-<input type="text" pInputText [(ngModel)]="correctLetter2" maxlength="1" class="w-3rem" (keyup)="onFilter()">
-<input type="text" pInputText [(ngModel)]="correctLetter3" maxlength="1" class="w-3rem" (keyup)="onFilter()">
-<input type="text" pInputText [(ngModel)]="correctLetter4" maxlength="1" class="w-3rem" (keyup)="onFilter()">
-<input type="text" pInputText [(ngModel)]="correctLetter5" maxlength="1" class="w-3rem" (keyup)="onFilter()">
-<h5>Invalid Letters</h5>
-<input type="text" pInputText [(ngModel)]="invalidLetters" (keyup)="onFilter()">
-
-<table>
-  <thead>
-    <th>word</th>
-    <th>score</th>
-  </thead>
-  <tbody>
-    <tr *ngFor="let stat of filteredStats">
-      <td>{{stat.word}}</td>
-      <td>{{stat.totalScore}}</td>
-    </tr>
-  </tbody>
-
-</table>
+<span *ngIf="stringifiedStats.length > 0">{{stringifiedStats}}</span>
+<div *ngIf="stringifiedStats.length == 0" class="grid bg-gray-50">
+  <div class="col-6">
+    <p-card header="Correct Letters" class="m-2">
+      <input type="text" pInputText [(ngModel)]="correctLetter1" (ngModelChange)="correctLetter1 = $event.toUpperCase()" maxlength="1" class="w-3rem m-1" (keyup)="onFilter()">
+    <input type="text" pInputText [(ngModel)]="correctLetter2" (ngModelChange)="correctLetter2 = $event.toUpperCase()" maxlength="1" class="w-3rem m-1" (keyup)="onFilter()">
+    <input type="text" pInputText [(ngModel)]="correctLetter3" (ngModelChange)="correctLetter3 = $event.toUpperCase()" maxlength="1" class="w-3rem m-1" (keyup)="onFilter()">
+    <input type="text" pInputText [(ngModel)]="correctLetter4" (ngModelChange)="correctLetter4 = $event.toUpperCase()" maxlength="1" class="w-3rem m-1" (keyup)="onFilter()">
+    <input type="text" pInputText [(ngModel)]="correctLetter5" (ngModelChange)="correctLetter5 = $event.toUpperCase()" maxlength="1" class="w-3rem m-1" (keyup)="onFilter()">
+    </p-card>
+    <p-card header="Misplaced Letters" class="m-2">
+      <input type="text" pInputText [(ngModel)]="misplacedLetters1" (ngModelChange)="misplacedLetters1 = $event.toUpperCase()" (keyup)="onFilter()" class="m-1">
+      <input type="text" pInputText [(ngModel)]="misplacedLetters2" (ngModelChange)="misplacedLetters2 = $event.toUpperCase()" (keyup)="onFilter()" class="m-1">
+      <input type="text" pInputText [(ngModel)]="misplacedLetters3" (ngModelChange)="misplacedLetters3 = $event.toUpperCase()" (keyup)="onFilter()" class="m-1">
+      <input type="text" pInputText [(ngModel)]="misplacedLetters4" (ngModelChange)="misplacedLetters4 = $event.toUpperCase()" (keyup)="onFilter()" class="m-1">
+      <input type="text" pInputText [(ngModel)]="misplacedLetters5" (ngModelChange)="misplacedLetters5 = $event.toUpperCase()" (keyup)="onFilter()" class="m-1">  
+    </p-card>
+    <p-card header="Incorrect Letters">
+      <input type="text" pInputText [(ngModel)]="invalidLetters" (ngModelChange)="invalidLetters = $event.toUpperCase()" (keyup)="onFilter()">
+    </p-card>
+  </div>
+  <div class="col-6">
+    <p-scrollPanel [style]="{width: '100%', height: '95vh'}">
+      <p-table [value]="filteredStats">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Word</th>
+            <th>Score</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-stat>
+          <tr>
+            <td>{{stat.word}}</td>
+            <td>{{stat.totalScore}}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-scrollPanel>
+    
+  </div>
+</div>
