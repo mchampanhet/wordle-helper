@@ -1,0 +1,8 @@
+:host ::ng-deep .p-togglebutton.p-button.p-highlight{
+    background: red;
+    border-color: red;
+}
+
+:host ::ng-deep .p-togglebutton.p-button:focus {
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #fd8484, 0 1px 2px 0 black
+}

@@ -16,7 +16,11 @@
       <input type="text" pInputText [(ngModel)]="misplacedLetters5" (ngModelChange)="misplacedLetters5 = $event.toUpperCase()" (keyup)="onFilter()" class="m-1">  
     </p-card>
     <p-card header="Incorrect Letters">
-      <input type="text" pInputText [(ngModel)]="invalidLetters" (ngModelChange)="invalidLetters = $event.toUpperCase()" (keyup)="onFilter()">
+      <div *ngFor="let row of invalidLettersArray; let rowIndex = index" class="m-1">
+        <div *ngIf="rowIndex == 1 || rowIndex == 2" class="min-w-1rem h-1rem inline m-1 text-white">m</div>
+        <div *ngIf="rowIndex == 2" class="min-w-1rem h-1rem inline m-1 text-white">m</div>
+        <p-toggleButton *ngFor="let letter of row; let letterIndex = index" [onLabel]="letter.letter" [offLabel]="letter.letter" [styleClass]="'m-1 w-2rem p-0 h-2rem'" (onChange)="onToggleInvalidKey($event, rowIndex, letterIndex)"></p-toggleButton>
+      </div>
     </p-card>
   </div>
   <div class="col-6">

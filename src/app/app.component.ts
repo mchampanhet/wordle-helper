@@ -23,7 +23,40 @@ export class AppComponent implements OnInit {
   misplacedLetters3 = "";
   misplacedLetters4 = "";
   misplacedLetters5 = "";
-  invalidLetters = "";
+  invalidLettersArray = [
+    [
+      new invalidLetter('Q'),
+      new invalidLetter('W'),
+      new invalidLetter('E'),
+      new invalidLetter('R'),
+      new invalidLetter('T'),
+      new invalidLetter('Y'),
+      new invalidLetter('U'),
+      new invalidLetter('I'),
+      new invalidLetter('O'),
+      new invalidLetter('P')
+    ],
+    [
+      new invalidLetter('A'),
+      new invalidLetter('S'),
+      new invalidLetter('D'),
+      new invalidLetter('F'),
+      new invalidLetter('G'),
+      new invalidLetter('H'),
+      new invalidLetter('J'),
+      new invalidLetter('K'),
+      new invalidLetter('L')
+    ],
+    [
+      new invalidLetter('Z'),
+      new invalidLetter('X'),
+      new invalidLetter('C'),
+      new invalidLetter('V'),
+      new invalidLetter('B'),
+      new invalidLetter('N'),
+      new invalidLetter('M')
+    ]
+  ];
   
   
 
@@ -33,6 +66,14 @@ export class AppComponent implements OnInit {
 
   public get misplacedLetters() {
     return [this.misplacedLetters1.toUpperCase(), this.misplacedLetters2.toUpperCase(), this.misplacedLetters3.toUpperCase(), this.misplacedLetters4.toUpperCase(), this.misplacedLetters5.toUpperCase()];
+  }
+
+  public get invalidLetters() {
+    var invalidLetters = new Array<string>();
+    this.invalidLettersArray.forEach(row => row.forEach(letter => {
+      if (letter.isInvalid) invalidLetters.push(letter.letter);
+    }))
+    return invalidLetters;
   }
 
   ngOnInit(): void {
@@ -53,66 +94,46 @@ export class AppComponent implements OnInit {
     this.filteredStats = this.stats.slice();
   }
 
-  onFilter() {
-    // this.filteredStats = this.stats.filter(x => 
-    //   (this.correctLetter1 == "" || this.correctLetter1.toUpperCase() == x.word.split('')[0])
-    //   && (this.correctLetter2 == "" || this.correctLetter2.toUpperCase() == x.word.split('')[1])
-    //   && (this.correctLetter3 == "" || this.correctLetter3.toUpperCase() == x.word.split('')[2])
-    //   && (this.correctLetter4 == "" || this.correctLetter4.toUpperCase() == x.word.split('')[3])
-    //   && (this.correctLetter5 == "" || this.correctLetter5.toUpperCase() == x.word.split('')[4])
-    //   && this.invalidLetters.toUpperCase().split('').every(i => !x.word.includes(i)));
+  onToggleInvalidKey(event: any, rowIndex: number, letterIndex: number) {
+    console.log(event);
+    this.invalidLettersArray[rowIndex][letterIndex].isInvalid = event.checked;
+    this.onFilter();
+  }
 
+  onFilter() {
     this.filteredStats = this.stats.filter(stat => {
 
       var word = stat.word;
-      var wordLetters = stat.word.toUpperCase().split('');
-      var includesInvalidLetters = wordLetters.some(x => this.invalidLetters.includes(x));
+      var wordLetters = word.toUpperCase().split('');
+      var indexesNeedingValidation = [0,1,2,3,4];
       
-      if (includesInvalidLetters) return false;
-
       var includesAllCorrectLetters = wordLetters.every((letter, index) => {
         if (this.correctLetters[index] == '') return true;
-
-        return letter.toUpperCase() == this.correctLetters[index].toUpperCase();
+        var isValid = letter == this.correctLetters[index];
+        if (isValid) indexesNeedingValidation = indexesNeedingValidation.filter(x => x !== index);
+        return isValid;
       });
 
       if (!includesAllCorrectLetters) return false;
 
-      var includesMisplacedLetterInWrongPlace = this.misplacedLetters.some((misplacedString, index) => misplacedString.includes(wordLetters[index]));
+      var includesInvalidLetters = wordLetters.filter((x, index) => indexesNeedingValidation.includes(index)).some(x => this.invalidLetters.includes(x));
+      if (includesInvalidLetters) return false;
 
+      var includesMisplacedLetterInWrongPlace = this.misplacedLetters
+        // filter out indexes that have already been validated with correct letters and empty misplaced letter strings
+        .filter((x, index) => indexesNeedingValidation.includes(index) && !!x)
+        .some((misplacedString, index) => misplacedString.includes(wordLetters[index]));
+      
       if (includesMisplacedLetterInWrongPlace) return false;
 
-      var includesMisplacedLettersInOtherPlace = true;
+      var includesMisplacedLettersInOtherPlace = this.misplacedLetters
+        .filter(x => !!x)
+        .every((misplacedString, misplacedStringIndex) => {
+          var wordLettersExceptValidOnesAndCurrentIndex = wordLetters.filter((letter, letterIndex) => indexesNeedingValidation.includes(letterIndex) && letterIndex !== misplacedStringIndex);
+          return misplacedString.split('').every(letter => wordLettersExceptValidOnesAndCurrentIndex.includes(letter));
+        });
 
       return includesMisplacedLettersInOtherPlace;
-
-      var includesMisplacedLetters = this.misplacedLetters.every((misplacedString, index) => {
-        return !misplacedString.includes(wordLetters[index]) && wordLetters.filter((wordLetter, wordLetterIndex) => wordLetterIndex != index)
-        .every(wordLetter => misplacedString.includes(wordLetter));
-      });
-
-      return includesMisplacedLetters;
-
-      
-      // if (!this.incorrectLetters.every(letters => {
-      //   return letters.split('').every(letter => stat.word.includes(letter));
-      // })) {
-      //   return false;
-      // }
-
-      // if (wordLetters.every((letter, index) => {
-      //   if (this.correctLetters[index] !== "") {
-      //     return letter.toUpperCase() == this.correctLetters[index].toUpperCase();
-      //   }
-
-      //   var incorrectIndex = this.incorrectLetters.findIndex(x => x == letter);
-      //   if (incorrectIndex == -1) {
-      //     return false;
-      //   }
-
-      //   return incorrectIndex != index;
-
-      // })
     });
   }
 
@@ -142,5 +163,15 @@ export class stat {
     this.letter = letter;
     this.index = index;
     this.frequency = frequency;
+  }
+}
+
+export class invalidLetter {
+  letter: string;
+  isInvalid: boolean;
+
+  constructor(letter = "", isInvalid = false) {
+    this.letter = letter;
+    this.isInvalid = isInvalid;
   }
 }

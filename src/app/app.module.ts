@@ -6,6 +6,7 @@ import {TableModule} from 'primeng/table';
 import {DividerModule} from 'primeng/divider';
 import {CardModule} from 'primeng/card';
 import {ScrollPanelModule} from 'primeng/scrollpanel';
+import {ToggleButtonModule} from 'primeng/togglebutton';
 
 
 
@@ -22,7 +23,8 @@ import { AppComponent } from './app.component';
     TableModule,
     DividerModule,
     CardModule,
-    ScrollPanelModule
+    ScrollPanelModule,
+    ToggleButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
