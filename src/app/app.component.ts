@@ -1,6 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import * as dictionary from './dictionary.json';
+import { invalidLetter } from './models/invalidLetter';
+import { stat } from './models/stat';
 import * as statsJson from './stats.json';
+import { wordStat } from './models/wordStat';
+import { FirebaseService } from './firebase.service';
+import * as historyJson from './Untitled-1.json';
+import { HistoricalAnswer } from './models/historicalAnswer';
 
 @Component({
   selector: 'app-root',
@@ -13,16 +19,8 @@ export class AppComponent implements OnInit {
   stats = Array.from(<Array<wordStat>>statsJson);
   filteredStats = new Array<wordStat>();
   stringifiedStats = "";
-  correctLetter1 = "";
-  correctLetter2 = "";
-  correctLetter3 = "";
-  correctLetter4 = "";
-  correctLetter5 = "";
-  misplacedLetters1 = "";
-  misplacedLetters2 = "";
-  misplacedLetters3 = "";
-  misplacedLetters4 = "";
-  misplacedLetters5 = "";
+  correctLetters = ["", "", "", "", ""];
+  misplacedLetters: string[][] = [[],[],[],[],[]];
   invalidLettersArray = [
     [
       new invalidLetter('Q'),
@@ -57,16 +55,7 @@ export class AppComponent implements OnInit {
       new invalidLetter('M')
     ]
   ];
-  
-  
-
-  public get correctLetters() {
-    return [this.correctLetter1.toUpperCase(), this.correctLetter2.toUpperCase(), this.correctLetter3.toUpperCase(), this.correctLetter4.toUpperCase(), this.correctLetter5.toUpperCase()];
-  }
-
-  public get misplacedLetters() {
-    return [this.misplacedLetters1.toUpperCase(), this.misplacedLetters2.toUpperCase(), this.misplacedLetters3.toUpperCase(), this.misplacedLetters4.toUpperCase(), this.misplacedLetters5.toUpperCase()];
-  }
+  historyStats = new Array<HistoricalAnswer>();
 
   public get invalidLetters() {
     var invalidLetters = new Array<string>();
@@ -75,6 +64,8 @@ export class AppComponent implements OnInit {
     }))
     return invalidLetters;
   }
+
+  constructor(private firebaseService: FirebaseService) {}
 
   ngOnInit(): void {
     if (this.stats.length == 0) {
@@ -92,6 +83,8 @@ export class AppComponent implements OnInit {
     }
     this.stats.forEach(x => {x.word = x.word.toUpperCase()});
     this.filteredStats = this.stats.slice();
+    // this.firebaseService.GetTodaysAnswer().subscribe(data => console.log(data));
+    this.historyStats = Array.from(<Array<HistoricalAnswer>>historyJson);
   }
 
   onToggleInvalidKey(event: any, rowIndex: number, letterIndex: number) {
@@ -107,6 +100,7 @@ export class AppComponent implements OnInit {
       var wordLetters = word.toUpperCase().split('');
       var indexesNeedingValidation = [0,1,2,3,4];
       
+      // make sure word contains all validated letters
       var includesAllCorrectLetters = wordLetters.every((letter, index) => {
         if (this.correctLetters[index] == '') return true;
         var isValid = letter == this.correctLetters[index];
@@ -116,62 +110,49 @@ export class AppComponent implements OnInit {
 
       if (!includesAllCorrectLetters) return false;
 
+      // make sure remaining slots don't contain any invalid letters
+      // unless it's a double-letter scenario where one is misplaced and the other is invalid
       var includesInvalidLetters = wordLetters.filter((x, index) => indexesNeedingValidation.includes(index)).some(x => this.invalidLetters.includes(x));
       if (includesInvalidLetters) return false;
 
+      // var includesMisplacedLetterInWrongPlace = this.misplacedLetters
+      //   // filter out indexes that have already been validated with correct letters and empty misplaced letter strings
+      //   .filter((x, i) => indexesNeedingValidation.includes(i) && x.length > 0)
+      //   .some((letters, index) => letters.some(letter => letter == wordLetters[index]));
+      
       var includesMisplacedLetterInWrongPlace = this.misplacedLetters
-        // filter out indexes that have already been validated with correct letters and empty misplaced letter strings
-        .filter((x, index) => indexesNeedingValidation.includes(index) && !!x)
-        .some((misplacedString, index) => misplacedString.includes(wordLetters[index]));
+        .some((letters, letterIndex) => {
+          if (!indexesNeedingValidation.includes(letterIndex) || letters.length == 0) return false;
+          return letters.some(letter => letter == wordLetters[letterIndex]);
+        });
+
       
       if (includesMisplacedLetterInWrongPlace) return false;
 
+      //TODO: something is wrong in here
       var includesMisplacedLettersInOtherPlace = this.misplacedLetters
-        .filter(x => !!x)
-        .every((misplacedString, misplacedStringIndex) => {
-          var wordLettersExceptValidOnesAndCurrentIndex = wordLetters.filter((letter, letterIndex) => indexesNeedingValidation.includes(letterIndex) && letterIndex !== misplacedStringIndex);
-          return misplacedString.split('').every(letter => wordLettersExceptValidOnesAndCurrentIndex.includes(letter));
+        .every((letters, index) => {
+          var wordLettersExceptValidOnesAndCurrentIndex = wordLetters
+            .filter((letter, letterIndex) => indexesNeedingValidation.includes(letterIndex) && letterIndex !== index);
+          return letters.every(letter => wordLettersExceptValidOnesAndCurrentIndex.includes(letter));
         });
 
       return includesMisplacedLettersInOtherPlace;
     });
   }
 
+  logMisplacedLetter(event: string[], index: number) {
+    this.misplacedLetters[index] = event.map(x => x.toUpperCase());
+  }
+
   log(event:any) {
     console.log(event);
   }
 
-}
-export class wordStat {
-  word: string;
-  stats: stat[];
-  totalScore: number;
-
-  constructor(word = "", stats = new Array<stat>(), totalScore = 0) {
-    this.word = word;
-    this.stats = stats;
-    this.totalScore = totalScore;
+  getHistoryForWord(word: string) {
+    var answers = this.historyStats.filter(x => x.word == word);
+    if (answers.length == 0) return "";
+    return answers[0].date;
   }
-}
 
-export class stat {
-  letter: string;
-  index: number;
-  frequency: number;
-
-  constructor(letter = "", index = 0, frequency = 0) {
-    this.letter = letter;
-    this.index = index;
-    this.frequency = frequency;
-  }
-}
-
-export class invalidLetter {
-  letter: string;
-  isInvalid: boolean;
-
-  constructor(letter = "", isInvalid = false) {
-    this.letter = letter;
-    this.isInvalid = isInvalid;
-  }
 }
