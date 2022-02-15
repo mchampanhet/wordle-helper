@@ -7,6 +7,7 @@ import { wordStat } from './models/wordStat';
 import { FirebaseService } from './firebase.service';
 import * as historyJson from './Untitled-1.json';
 import { HistoricalAnswer } from './models/historicalAnswer';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -55,6 +56,7 @@ export class AppComponent implements OnInit {
       new invalidLetter('M')
     ]
   ];
+  historyStatsSub: Subscription;
   historyStats = new Array<HistoricalAnswer>();
 
   public get invalidLetters() {
@@ -65,7 +67,14 @@ export class AppComponent implements OnInit {
     return invalidLetters;
   }
 
-  constructor(private firebaseService: FirebaseService) {}
+  constructor(private firebaseService: FirebaseService) {
+    this.historyStatsSub = this.firebaseService.pastAnswers.subscribe(x => {
+      this.historyStats = x;
+    });
+    this.firebaseService.GetPastAnswers();
+    
+    
+  }
 
   ngOnInit(): void {
     if (this.stats.length == 0) {
@@ -82,9 +91,7 @@ export class AppComponent implements OnInit {
       this.stringifiedStats = JSON.stringify(this.stats);
     }
     this.stats.forEach(x => {x.word = x.word.toUpperCase()});
-    this.filteredStats = this.stats.slice();
-    // this.firebaseService.GetTodaysAnswer().subscribe(data => console.log(data));
-    this.historyStats = Array.from(<Array<HistoricalAnswer>>historyJson);
+    this.filteredStats = this.stats.slice();    
   }
 
   onToggleInvalidKey(event: any, rowIndex: number, letterIndex: number) {
@@ -99,45 +106,62 @@ export class AppComponent implements OnInit {
       var word = stat.word;
       var wordLetters = word.toUpperCase().split('');
       var indexesNeedingValidation = [0,1,2,3,4];
-      
-      // make sure word contains all validated letters
-      var includesAllCorrectLetters = wordLetters.every((letter, index) => {
-        if (this.correctLetters[index] == '') return true;
-        var isValid = letter == this.correctLetters[index];
-        if (isValid) indexesNeedingValidation = indexesNeedingValidation.filter(x => x !== index);
-        return isValid;
+      var wordIsPossible = true;
+
+      wordLetters.forEach((letter, index) => {
+        // if we've already disqualified the word, 
+        // don't bother doing any more checks
+        if (!wordIsPossible) {
+          return;
+        }
+
+        // if there is a known correct letter in this position,
+        // run a check
+        if (!!this.correctLetters[index]) {
+          
+          // if letter isn't correct, the word is disqualified
+          if (letter != this.correctLetters[index]) {
+            wordIsPossible = false;
+            return;
+          }
+
+          // if letter is correct, word isn't disqualified yet
+          // move on to checking next letter
+          if (letter == this.correctLetters[index]) {
+            return;
+          }
+        }
+
+        // check if letter isn't disqualified by misplaced
+        // letters for this index
+        if (this.misplacedLetters[index].includes(letter)) {
+          wordIsPossible = false;
+          return;
+        }
+
+        // if letter is known invalid, word doesn't qualify
+        if (this.invalidLetters.includes(letter)) {
+          wordIsPossible = false;
+          return;
+        }
       });
 
-      if (!includesAllCorrectLetters) return false;
+      // make sure word includes all misplaced letters
+      // but not in the known incorrect position
+      this.misplacedLetters.forEach((misplacedLetters, misplacedIndex) => {
+        if (!wordIsPossible) {
+          return;
+        }
 
-      // make sure remaining slots don't contain any invalid letters
-      // unless it's a double-letter scenario where one is misplaced and the other is invalid
-      var includesInvalidLetters = wordLetters.filter((x, index) => indexesNeedingValidation.includes(index)).some(x => this.invalidLetters.includes(x));
-      if (includesInvalidLetters) return false;
-
-      // var includesMisplacedLetterInWrongPlace = this.misplacedLetters
-      //   // filter out indexes that have already been validated with correct letters and empty misplaced letter strings
-      //   .filter((x, i) => indexesNeedingValidation.includes(i) && x.length > 0)
-      //   .some((letters, index) => letters.some(letter => letter == wordLetters[index]));
-      
-      var includesMisplacedLetterInWrongPlace = this.misplacedLetters
-        .some((letters, letterIndex) => {
-          if (!indexesNeedingValidation.includes(letterIndex) || letters.length == 0) return false;
-          return letters.some(letter => letter == wordLetters[letterIndex]);
+        misplacedLetters.forEach(misplacedLetter => {
+          if (!wordLetters.filter((x,i) => i != misplacedIndex).includes(misplacedLetter)) {
+            wordIsPossible = false;
+            return;
+          }
         });
+      });
 
-      
-      if (includesMisplacedLetterInWrongPlace) return false;
-
-      //TODO: something is wrong in here
-      var includesMisplacedLettersInOtherPlace = this.misplacedLetters
-        .every((letters, index) => {
-          var wordLettersExceptValidOnesAndCurrentIndex = wordLetters
-            .filter((letter, letterIndex) => indexesNeedingValidation.includes(letterIndex) && letterIndex !== index);
-          return letters.every(letter => wordLettersExceptValidOnesAndCurrentIndex.includes(letter));
-        });
-
-      return includesMisplacedLettersInOtherPlace;
+      return wordIsPossible;
     });
   }
 
