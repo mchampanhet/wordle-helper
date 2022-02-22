@@ -12,10 +12,11 @@ import { AppComponent } from './app.component';
 import { ChipsModule } from 'primeng/chips';
 import { HttpClientModule } from '@angular/common/http';
 import { FirebaseService } from './firebase.service';
-import { environment } from '../environments/environment';
-import { initializeApp,provideFirebaseApp } from '@angular/fire/app';
-import { provideAuth,getAuth } from '@angular/fire/auth';
-import { provideDatabase,getDatabase } from '@angular/fire/database';
+import { ButtonModule } from 'primeng/button';
+import { MenuModule } from 'primeng/menu';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { InputSwitchModule } from 'primeng/inputswitch';
 
 
 @NgModule({
@@ -33,10 +34,13 @@ import { provideDatabase,getDatabase } from '@angular/fire/database';
     ToggleButtonModule,
     DragDropModule,
     ChipsModule,
-    HttpClientModule/*,
-    provideFirebaseApp(() => initializeApp(environment.firebase)),
-    provideAuth(() => getAuth()),
-    provideDatabase(() => getDatabase())*/
+    HttpClientModule,
+    ButtonModule,
+    ToggleButtonModule,
+    MenuModule,
+    BrowserAnimationsModule,
+    OverlayPanelModule,
+    InputSwitchModule
   ],
   providers: [FirebaseService],
   bootstrap: [AppComponent]

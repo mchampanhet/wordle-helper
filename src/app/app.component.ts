@@ -58,6 +58,9 @@ export class AppComponent implements OnInit {
   ];
   historyStatsSub: Subscription;
   historyStats = new Array<HistoricalAnswer>();
+  vowels = ['A','E','I','O','U'];
+
+  private _consonantMode = false;
 
   public get invalidLetters() {
     var invalidLetters = new Array<string>();
@@ -65,6 +68,26 @@ export class AppComponent implements OnInit {
       if (letter.isInvalid) invalidLetters.push(letter.letter);
     }))
     return invalidLetters;
+  }
+
+  public get consonantMode() {
+    return this._consonantMode;
+  }
+
+  public set consonantMode(value) {
+    if (value != this._consonantMode) {
+      this.stats.forEach(stat => {
+        var filteredStats = value ? stat.stats.filter(x => !this.vowels.includes(x.letter)) : stat.stats;
+        stat.totalScore = filteredStats
+          .map(x => x.frequency)
+          .reduce((previousValue, currentValue) => previousValue + currentValue);
+      });
+      
+      this.stats.sort((a,b) => b.totalScore - a.totalScore);
+      this.stats.forEach(x => {x.word = x.word.toUpperCase()});
+      this.filteredStats = this.stats.slice(); 
+      this._consonantMode = value;
+    }
   }
 
   constructor(private firebaseService: FirebaseService) {

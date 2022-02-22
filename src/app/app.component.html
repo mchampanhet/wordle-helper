@@ -1,5 +1,21 @@
 <span *ngIf="stringifiedStats.length > 0">{{stringifiedStats}}</span>
 <div *ngIf="stringifiedStats.length == 0" class="grid bg-gray-50">
+  <div class="flex flex-row align-content-center justify-content-between bg-primary col-12">
+    <div class="flex align-items-center justify-content-center w-2rem h-2rem m-2 md:w-8rem"></div>
+    <div class="flex align-items-center justify-content-center w-8rem h-3rem font-bold text-gray-900 border-round m-2 text-base text-white md:w-15rem md:text-4xl">
+      <i class="pi pi-question-circle text-2xl m-2 md:text-5xl"></i>
+      Wordle-ish
+    </div>
+    <div class="flex align-items-center align-content-center justify-content-center w-3rem h-3rem font-bold text-gray-900 border-round m-2 md:w-3rem">
+      <button pButton type="button" icon="pi pi-cog" class="p-button-secondary" (click)="settingsPanel.toggle($event)"></button>
+      <p-overlayPanel #settingsPanel>
+        <ng-template pTemplate>
+          <h5>Consonant Mode</h5>
+          <p-inputSwitch inputId="consonantMode" [(ngModel)]="consonantMode"></p-inputSwitch>
+        </ng-template>
+      </p-overlayPanel>
+    </div>
+  </div>
   <div class="col-6">
     <p-card header="Correct Letters" class="m-2">
       <input type="text" pInputText [(ngModel)]="correctLetters[0]" (ngModelChange)="correctLetters[0] = $event.toUpperCase()" maxlength="1" class="w-3rem m-1 text-center text-white font-bold" (keyup)="onFilter()" [ngClass]="{'bg-green-700': !!correctLetters[0]}">
